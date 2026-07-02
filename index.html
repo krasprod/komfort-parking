@@ -31,7 +31,6 @@
   .you-dot{width:16px;height:16px;background:#1e90ff;border:3px solid #fff;border-radius:50%;
     box-shadow:0 0 0 2px rgba(30,144,255,.5)}
 </style>
-<style>.picks{display:none!important}</style>
 </head>
 <body>
 <div id="map"></div>
@@ -170,26 +169,28 @@ async function pollStatus(){
 }
 pollStatus(); setInterval(pollStatus, 3000);
 
-// --- режим підбору координат: клікай, диктуй мені числа ---
-let picks=[];
-const box=document.createElement('div');
-box.className='picks';
-document.body.appendChild(box);
-function render(){
-  box.innerHTML = '<b>📍 Кліки (передай мені):</b><br>' +
-    (picks.length? picks.map((p,i)=>`#${i+1} &nbsp; ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`).join('<br>')
-                 : '<span style="color:#888">клікни на карті: 1) де камера, 2) куди дивиться</span>') +
-    '<br><button onclick="picks=[];pmarks.forEach(m=>map.removeLayer(m));pmarks=[];render()">очистити</button>';
-}
-let pmarks=[];
-map.on('click', e=>{
-  picks.push(e.latlng);
-  const mk=L.circleMarker(e.latlng,{radius:7,color:'#fff',weight:2,fillColor:'#ff9500',fillOpacity:1})
-    .addTo(map).bindTooltip('#'+picks.length,{permanent:true,direction:'top'});
-  pmarks.push(mk);
+// --- режим підбору координат: ТІЛЬКИ для калібрування, вмикається через ?pick=1 ---
+if(new URLSearchParams(location.search).get('pick')==='1'){
+  let picks=[], pmarks=[];
+  const box=document.createElement('div');
+  box.className='picks'; box.style.display='block';
+  document.body.appendChild(box);
+  function render(){
+    box.innerHTML = '<b>📍 Кліки (передай мені):</b><br>' +
+      (picks.length? picks.map((p,i)=>`#${i+1} &nbsp; ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`).join('<br>')
+                   : '<span style="color:#888">клікни на карті</span>');
+    const btn=document.createElement('button'); btn.textContent='очистити';
+    btn.onclick=()=>{ picks=[]; pmarks.forEach(m=>map.removeLayer(m)); pmarks=[]; render(); };
+    box.appendChild(document.createElement('br')); box.appendChild(btn);
+  }
+  map.on('click', e=>{
+    picks.push(e.latlng);
+    pmarks.push(L.circleMarker(e.latlng,{radius:7,color:'#fff',weight:2,fillColor:'#ff9500',fillOpacity:1})
+      .addTo(map).bindTooltip('#'+picks.length,{permanent:true,direction:'top'}));
+    render();
+  });
   render();
-});
-render();
+}
 
 // --- геолокація користувача (синя точка «ви тут») ---
 let youMarker=null, youCircle=null;
