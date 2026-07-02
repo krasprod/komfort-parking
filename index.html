@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Комфорт Таун — вільні паркомісця</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html,body{margin:0;height:100%;font-family:-apple-system,Segoe UI,Roboto,sans-serif}
+  #map{position:absolute;inset:0}
+  .panel{position:absolute;z-index:1000;top:12px;left:12px;background:rgba(20,22,28,.92);
+    color:#e8eaed;padding:12px 14px;border-radius:12px;max-width:250px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+  .panel h1{font-size:15px;margin:0 0 4px}
+  .panel p{font-size:12px;margin:4px 0;color:#aab}
+  .legend{margin-top:8px;font-size:12px;line-height:1.7}
+  .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .g{background:#34c759}.r{background:#ff3b30}.gr{background:#8a8f98}
+  .pin{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4);border:2px solid #fff;font-weight:700;color:#fff;font-size:12px}
+  .pin span{transform:rotate(45deg)}
+  .pin.live{background:#34c759}.pin.nocam{background:#8a8f98}
+  .badge{position:absolute;top:-8px;right:-8px;background:#fff;color:#111;border-radius:9px;
+    font-size:10px;font-weight:700;padding:1px 5px;transform:rotate(45deg)}
+  .picks{position:absolute;z-index:1000;bottom:12px;left:12px;background:rgba(20,22,28,.92);
+    color:#e8eaed;padding:10px 12px;border-radius:10px;max-width:260px;font-size:12px;line-height:1.6}
+  .picks b{color:#ff9f0a}
+  .picks button{margin-top:6px;font-size:11px;padding:3px 8px;border:0;border-radius:6px;cursor:pointer}
+  .loc-btn{width:38px;height:38px;border:0;border-radius:8px;background:#fff;font-size:18px;
+    cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.35);line-height:38px;text-align:center}
+  .you-dot{width:16px;height:16px;background:#1e90ff;border:3px solid #fff;border-radius:50%;
+    box-shadow:0 0 0 2px rgba(30,144,255,.5)}
+</style>
+<style>.picks{display:none!important}</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel">
+  <h1>🅿️ Вільні паркомісця</h1>
+  <p>Комфорт Таун — вид зверху. Демонстрація: камера бачить паркінг і показує вільні місця в реальному часі.</p>
+  <div class="legend">
+    <div><span class="dot g"></span>є вільні місця (камера)</div>
+    <div><span class="dot r"></span>майже немає</div>
+    <div><span class="dot gr"></span>камера ще не підключена</div>
+  </div>
+</div>
+<script>
+const PARKS = [{"slug": "parking-26", "name": "Паркінг №26", "address": "вул. Регенераторна, 4Ж", "lat": 50.434247, "lng": 30.618387, "free": false, "status": "nocam"}, {"slug": "parking-27", "name": "Паркінг №27", "address": "вул. Регенераторна, 4Е", "lat": 50.433742, "lng": 30.618725, "free": false, "status": "nocam"}, {"slug": "parking-33", "name": "Паркінг №33", "address": "вул. Регенераторна, 4Д", "lat": 50.433837, "lng": 30.625259, "free": false, "status": "nocam"}, {"slug": "parking-12zh", "name": "Паркінг", "address": "вул. Березнева, 12Ж", "lat": 50.430625, "lng": 30.620688, "free": false, "status": "nocam"}, {"slug": "parking-12k", "name": "Паркінг", "address": "вул. Березнева, 12К", "lat": 50.430502, "lng": 30.620152, "free": false, "status": "nocam"}, {"slug": "parking-12l", "name": "Паркінг", "address": "вул. Березнева, 12Л", "lat": 50.430359, "lng": 30.619615, "free": false, "status": "nocam"}, {"slug": "parking-12m", "name": "Паркінг", "address": "вул. Березнева, 12М", "lat": 50.430195, "lng": 30.61909, "free": false, "status": "nocam"}, {"slug": "parking-12n", "name": "Паркінг", "address": "вул. Березнева, 12Н", "lat": 50.430065, "lng": 30.618542, "free": false, "status": "nocam"}, {"slug": "parking-kr", "name": "Паркінг", "address": "", "lat": 50.438701, "lng": 30.622321, "free": true, "status": "nocam"}, {"slug": "parking-rynok", "name": "Паркінг", "address": "", "lat": 50.43812, "lng": 30.61864, "free": true, "status": "nocam"}, {"slug": "parking-bilya-muyku", "name": "Паркінг", "address": "", "lat": 50.437474, "lng": 30.617936, "free": true, "status": "nocam"}, {"slug": "parking-kaunaska", "name": "Паркінг", "address": "", "lat": 50.437405, "lng": 30.623439, "free": true, "status": "nocam"}, {"slug": "parking-tampare-1", "name": "Паркінг", "address": "", "lat": 50.437799, "lng": 30.616781, "free": true, "status": "nocam"}, {"slug": "parking-tampare-2", "name": "Паркінг", "address": "", "lat": 50.438137, "lng": 30.616506, "free": true, "status": "nocam"}, {"slug": "parking-vyfleiemska-1", "name": "Паркінг", "address": "", "lat": 50.437288, "lng": 30.613805, "free": true, "status": "nocam"}, {"slug": "parking-silpo", "name": "Паркінг", "address": "", "lat": 50.429325, "lng": 30.618891, "free": true, "status": "nocam"}, {"slug": "parking-vyfleiemska-2", "name": "Паркінг", "address": "", "lat": 50.435296, "lng": 30.614931, "free": true, "status": "nocam"}];
+const map = L.map('map',{zoomControl:true}).setView([50.435914, 30.617948], 19);
+const basePlan = L.tileLayer('https://tiles.komfort-town.info/styles/kt-no-poi/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© Komfort Town'});
+const baseSat  = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                             {maxZoom:19, attribution:'© Esri, Maxar'});
+baseSat.addTo(map);
+L.control.layers({'🗺 План ЖК': basePlan, '🛰 Супутник': baseSat}, null, {collapsed:false}).addTo(map);
+
+function pin(p){
+  let cls='nocam', label='🅿️', badge='';
+  if(p.status==='live'){
+    const ratio = p.free/p.total;
+    cls = ratio>0 ? 'live':'live';
+    label = p.free;
+    badge = `<div class="badge">LIVE</div>`;
+  }
+  return L.divIcon({className:'', html:`<div class="pin ${cls}"><span>${label}</span>${badge}</div>`,
+    iconSize:[34,34], iconAnchor:[17,34], popupAnchor:[0,-32]});
+}
+
+PARKS.forEach(p=>{
+  const m = L.marker([p.lat,p.lng],{icon:pin(p)}).addTo(map);
+  let body;
+  if(p.status==='live'){
+    body = `<b>${p.name||'Паркінг'}</b><br>${p.address||''}<br>
+            <span style="color:#1e7a34;font-weight:700">Вільно: ${p.free} / ${p.total}</span><br>
+            <small>🟢 працює камера №1 (демо)</small>`;
+  }else{
+    body = `<b>${p.name||'Паркінг'}</b><br>${p.address||''}<br>
+            <small style="color:#888">камера ще не підключена</small>`;
+  }
+  m.bindPopup(body);
+});
+
+// --- камера + конус огляду + вуличні місця ---
+const CAM = {"pos": [50.435327, 30.617266], "lookat": [50.435914, 30.617948], "name": "Вуличні місця (камера №1)", "free": 8, "total": 20};
+function destPoint(lat,lng,brgDeg,distM){
+  const R=6378137, br=brgDeg*Math.PI/180, d=distM/R;
+  const la=lat*Math.PI/180, lo=lng*Math.PI/180;
+  const la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(br));
+  const lo2=lo+Math.atan2(Math.sin(br)*Math.sin(d)*Math.cos(la), Math.cos(d)-Math.sin(la)*Math.sin(la2));
+  return [la2*180/Math.PI, lo2*180/Math.PI];
+}
+function bearingDeg(a,b){
+  const la1=a[0]*Math.PI/180, la2=b[0]*Math.PI/180, dl=(b[1]-a[1])*Math.PI/180;
+  const y=Math.sin(dl)*Math.cos(la2);
+  const x=Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl);
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;
+}
+(function(){
+  const o=CAM.pos, look=CAM.lookat;
+  const brg=bearingDeg(o,look);
+  const dist=map.distance(o,look);
+  const range=Math.max(dist*1.3, 45), half=28;
+  const pts=[o];
+  for(let a=-half;a<=half;a+=6) pts.push(destPoint(o[0],o[1],brg+a,range));
+  L.polygon(pts,{color:'#34c759',weight:1,fillColor:'#34c759',fillOpacity:.18}).addTo(map);
+  const camIcon=L.divIcon({className:'',html:'<div style="font-size:22px;line-height:1;filter:drop-shadow(0 1px 2px #000)">📷</div>',iconSize:[24,24],iconAnchor:[12,12]});
+  L.marker(o,{icon:camIcon}).addTo(map).bindPopup('📷 Камера №1<br><small>дивиться на вуличні місця</small>');
+})();
+
+// --- ряд уличных мест вдоль двух точек ---
+const ROW = {"a": [50.436135, 30.617799], "b": [50.435693, 30.618097], "count": 21, "depth_m": 5.0, "offset_m": 1.1, "occupied": [1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1]};
+let bayLayers=[], liveMarker=null;
+(function(){
+  const a=ROW.a, b=ROW.b, n=ROW.count, depth=ROW.depth_m;
+  const mPerLat=111320, mPerLng=111320*Math.cos(a[0]*Math.PI/180);
+  const bE=(b[1]-a[1])*mPerLng, bN=(b[0]-a[0])*mPerLat;
+  const len=Math.hypot(bE,bN), ux=bE/len, uy=bN/len, px=-uy, py=ux;
+  const half=(len/n)/2*0.82;
+  const off=ROW.offset_m||0, offx=off*px, offy=off*py;   // боковой сдвиг ряда
+  const toLL=(E,N)=>[a[0]+N/mPerLat, a[1]+E/mPerLng];
+  for(let i=0;i<n;i++){
+    const t=(i+0.5)/n, cx=t*bE+offx, cy=t*bN+offy;
+    const c=[
+      toLL(cx-ux*half-px*depth/2, cy-uy*half-py*depth/2),
+      toLL(cx+ux*half-px*depth/2, cy+uy*half-py*depth/2),
+      toLL(cx+ux*half+px*depth/2, cy+uy*half+py*depth/2),
+      toLL(cx-ux*half+px*depth/2, cy-uy*half+py*depth/2),
+    ];
+    bayLayers.push(L.polygon(c,{color:'#fff',weight:1,fillColor:'#8a8f98',fillOpacity:.7}).addTo(map));
+  }
+  const mid=toLL(bE/2+offx,bN/2+offy);
+  liveMarker=L.marker(mid,{icon:liveIcon('–')}).addTo(map);
+})();
+
+function liveIcon(txt){
+  return L.divIcon({className:'',html:`<div class="pin live"><span>${txt}</span><div class="badge">LIVE</div></div>`,
+    iconSize:[34,34],iconAnchor:[17,34],popupAnchor:[0,-32]});
+}
+// occArr: массив 1/0 (занято/свободно) в порядке ряда a->b
+function setBays(occArr){
+  const rev = new URLSearchParams(location.search).get('rev')==='1';
+  let free=0;
+  for(let i=0;i<bayLayers.length;i++){
+    const idx = rev ? bayLayers.length-1-i : i;
+    const occ = occArr[idx]===1 || occArr[idx]===true;
+    if(!occ) free++;
+    bayLayers[i].setStyle({fillColor: occ?'#ff3b30':'#34c759'});
+    bayLayers[i].bindTooltip('#'+(i+1)+' '+(occ?'зайнято':'вільно'));
+  }
+  liveMarker.setIcon(liveIcon(free));
+  liveMarker.bindPopup(`<b>${CAM.name}</b><br><span style="color:#1e7a34;font-weight:700">Вільно: ${free} / ${bayLayers.length}</span>`);
+  return free;
+}
+
+// сразу демо-раскраска (пока камера не подключена)
+setBays(ROW.occupied);
+
+// живые данные с камеры: monitor.py пишет status.json рядом
+let liveOn=false;
+async function pollStatus(){
+  try{
+    const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok) return;
+    const s=await r.json();
+    if(s.spots && s.spots.length){
+      const occ=[...s.spots].sort((x,y)=>x.id-y.id).map(x=>x.occupied?1:0);
+      setBays(occ);
+      if(!liveOn){liveOn=true; console.log('LIVE data from camera:', occ.length,'spots');}
+    }
+  }catch(e){}
+}
+pollStatus(); setInterval(pollStatus, 3000);
+
+// --- режим підбору координат: клікай, диктуй мені числа ---
+let picks=[];
+const box=document.createElement('div');
+box.className='picks';
+document.body.appendChild(box);
+function render(){
+  box.innerHTML = '<b>📍 Кліки (передай мені):</b><br>' +
+    (picks.length? picks.map((p,i)=>`#${i+1} &nbsp; ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`).join('<br>')
+                 : '<span style="color:#888">клікни на карті: 1) де камера, 2) куди дивиться</span>') +
+    '<br><button onclick="picks=[];pmarks.forEach(m=>map.removeLayer(m));pmarks=[];render()">очистити</button>';
+}
+let pmarks=[];
+map.on('click', e=>{
+  picks.push(e.latlng);
+  const mk=L.circleMarker(e.latlng,{radius:7,color:'#fff',weight:2,fillColor:'#ff9500',fillOpacity:1})
+    .addTo(map).bindTooltip('#'+picks.length,{permanent:true,direction:'top'});
+  pmarks.push(mk);
+  render();
+});
+render();
+
+// --- геолокація користувача (синя точка «ви тут») ---
+let youMarker=null, youCircle=null;
+map.on('locationfound', e=>{
+  if(youMarker){ map.removeLayer(youMarker); map.removeLayer(youCircle); }
+  youCircle=L.circle(e.latlng,{radius:Math.min(e.accuracy/2,120),color:'#1e90ff',
+    weight:1,fillColor:'#1e90ff',fillOpacity:.12}).addTo(map);
+  youMarker=L.marker(e.latlng,{icon:L.divIcon({className:'',html:'<div class="you-dot"></div>',
+    iconSize:[16,16],iconAnchor:[8,8]})}).addTo(map).bindPopup('Ви тут');
+});
+map.on('locationerror', ()=> console.log('геолокація недоступна (потрібен HTTPS та дозвіл)'));
+const LocateBtn=L.Control.extend({options:{position:'bottomright'},
+  onAdd:function(){
+    const b=L.DomUtil.create('button','loc-btn');
+    b.innerHTML='📍'; b.title='Моє місцезнаходження';
+    b.onclick=ev=>{ ev.preventDefault();
+      map.locate({setView:true, maxZoom:19, enableHighAccuracy:true}); };
+    L.DomEvent.disableClickPropagation(b);
+    return b;
+  }});
+map.addControl(new LocateBtn());
+</script>
+</body>
+</html>
