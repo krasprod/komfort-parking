@@ -46,7 +46,7 @@
 </div>
 <script>
 const PARKS = [{"slug": "parking-26", "name": "Паркінг №26", "address": "вул. Регенераторна, 4Ж", "lat": 50.434247, "lng": 30.618387, "free": false, "status": "nocam"}, {"slug": "parking-27", "name": "Паркінг №27", "address": "вул. Регенераторна, 4Е", "lat": 50.433742, "lng": 30.618725, "free": false, "status": "nocam"}, {"slug": "parking-33", "name": "Паркінг №33", "address": "вул. Регенераторна, 4Д", "lat": 50.433837, "lng": 30.625259, "free": false, "status": "nocam"}, {"slug": "parking-12zh", "name": "Паркінг", "address": "вул. Березнева, 12Ж", "lat": 50.430625, "lng": 30.620688, "free": false, "status": "nocam"}, {"slug": "parking-12k", "name": "Паркінг", "address": "вул. Березнева, 12К", "lat": 50.430502, "lng": 30.620152, "free": false, "status": "nocam"}, {"slug": "parking-12l", "name": "Паркінг", "address": "вул. Березнева, 12Л", "lat": 50.430359, "lng": 30.619615, "free": false, "status": "nocam"}, {"slug": "parking-12m", "name": "Паркінг", "address": "вул. Березнева, 12М", "lat": 50.430195, "lng": 30.61909, "free": false, "status": "nocam"}, {"slug": "parking-12n", "name": "Паркінг", "address": "вул. Березнева, 12Н", "lat": 50.430065, "lng": 30.618542, "free": false, "status": "nocam"}, {"slug": "parking-kr", "name": "Паркінг", "address": "", "lat": 50.438701, "lng": 30.622321, "free": true, "status": "nocam"}, {"slug": "parking-rynok", "name": "Паркінг", "address": "", "lat": 50.43812, "lng": 30.61864, "free": true, "status": "nocam"}, {"slug": "parking-bilya-muyku", "name": "Паркінг", "address": "", "lat": 50.437474, "lng": 30.617936, "free": true, "status": "nocam"}, {"slug": "parking-kaunaska", "name": "Паркінг", "address": "", "lat": 50.437405, "lng": 30.623439, "free": true, "status": "nocam"}, {"slug": "parking-tampare-1", "name": "Паркінг", "address": "", "lat": 50.437799, "lng": 30.616781, "free": true, "status": "nocam"}, {"slug": "parking-tampare-2", "name": "Паркінг", "address": "", "lat": 50.438137, "lng": 30.616506, "free": true, "status": "nocam"}, {"slug": "parking-vyfleiemska-1", "name": "Паркінг", "address": "", "lat": 50.437288, "lng": 30.613805, "free": true, "status": "nocam"}, {"slug": "parking-silpo", "name": "Паркінг", "address": "", "lat": 50.429325, "lng": 30.618891, "free": true, "status": "nocam"}, {"slug": "parking-vyfleiemska-2", "name": "Паркінг", "address": "", "lat": 50.435296, "lng": 30.614931, "free": true, "status": "nocam"}];
-const map = L.map('map',{zoomControl:true}).setView([50.435914, 30.617948], 19);
+const map = L.map('map',{zoomControl:true}).setView([50.435964, 30.617922], 19);
 const basePlan = L.tileLayer('https://tiles.komfort-town.info/styles/kt-no-poi/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© Komfort Town'});
 const baseSat  = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                              {maxZoom:19, attribution:'© Esri, Maxar'});
@@ -80,7 +80,7 @@ PARKS.forEach(p=>{
 });
 
 // --- камера + конус огляду + вуличні місця ---
-const CAM = {"pos": [50.435327, 30.617266], "lookat": [50.435914, 30.617948], "name": "Вуличні місця (камера №1)", "free": 8, "total": 20};
+const CAM = {"pos": [50.435327, 30.617266], "lookat": [50.435964, 30.617922], "name": "Вуличні місця (камера №1)", "free": 8, "total": 20};
 function destPoint(lat,lng,brgDeg,distM){
   const R=6378137, br=brgDeg*Math.PI/180, d=distM/R;
   const la=lat*Math.PI/180, lo=lng*Math.PI/180;
@@ -107,7 +107,7 @@ function bearingDeg(a,b){
 })();
 
 // --- ряд уличных мест вдоль двух точек ---
-const ROW = {"a": [50.436135, 30.617799], "b": [50.435693, 30.618097], "count": 21, "depth_m": 5.0, "offset_m": 1.1, "occupied": [1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1]};
+const ROW = {"a": [50.435699, 30.618113], "b": [50.436229, 30.61773], "count": 26, "depth_m": 5.0, "offset_m": 0.0, "occupied": [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0]};
 let bayLayers=[], liveMarker=null;
 (function(){
   const a=ROW.a, b=ROW.b, n=ROW.count, depth=ROW.depth_m;
