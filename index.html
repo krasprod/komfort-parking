@@ -31,6 +31,7 @@
   .you-dot{width:16px;height:16px;background:#1e90ff;border:3px solid #fff;border-radius:50%;
     box-shadow:0 0 0 2px rgba(30,144,255,.5)}
 </style>
+<script>window.PARKING_DATA_URL="https://finishing-accept-detroit-exotic.trycloudflare.com/status.json";</script>
 </head>
 <body>
 <div id="map"></div>
@@ -153,11 +154,13 @@ function setBays(occArr){
 // сразу демо-раскраска (пока камера не подключена)
 setBays(ROW.occupied);
 
-// живые данные с камеры: monitor.py пишет status.json рядом
+// живые данные: локально — status.json рядом; публично — адрес туннеля (window.PARKING_DATA_URL)
+const DATA_URL = (typeof window!=='undefined' && window.PARKING_DATA_URL) || 'status.json';
 let liveOn=false;
 async function pollStatus(){
   try{
-    const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});
+    const sep = DATA_URL.includes('?') ? '&' : '?';
+    const r=await fetch(DATA_URL+sep+'t='+Date.now(),{cache:'no-store'});
     if(!r.ok) return;
     const s=await r.json();
     if(s.spots && s.spots.length){
